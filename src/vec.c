@@ -70,3 +70,8 @@ unsigned int Vec_len(Vec *vec) {
 unsigned int Vec_capacity(Vec *vec) {
     return vec->capacity;
 }
+
+void Vec_popBack(Vec *vec) {
+    vec->elements[vec->length - 1] = 0;
+    vec->length -= 1;
+}
