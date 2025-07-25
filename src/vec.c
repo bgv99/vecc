@@ -42,7 +42,7 @@ void Vec_put(Vec *vec, unsigned int index, void *value) {
         int current = vec->capacity * sizeof(void *);
 
         if((vec->elements = realloc(vec->elements, current + increment)) != NULL) {
-            vec->capacity = vec->capacity + (index - vec->capacity);
+            vec->capacity += index - vec->capacity;
         } else {
             printf("null pointer - reallocation failed\n");
             Vec_destroy(vec);
@@ -67,10 +67,14 @@ void Vec_remove(Vec *vec, unsigned int index) {
     }
 
     for(int i = index; i < (Vec_capacity(vec) - 1); i++) {
-        void *backup = vec->elements[i];
+        if(vec->elements[i + 1] != NULL) {
+            void *backup = vec->elements[i];
 
-        vec->elements[i] = vec->elements[i + 1];
-        vec->elements[i + 1] = backup;
+            vec->elements[i] = vec->elements[i + 1];
+            vec->elements[i + 1] = backup;
+        } else {
+            break;
+        }
     }
 
     int current = vec->capacity * sizeof(void *);
