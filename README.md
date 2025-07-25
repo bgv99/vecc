@@ -9,8 +9,8 @@
         Vec_put(my_vec, 1, "Java");
         Vec_put(my_vec, 2, "Python");
 
-        for(int i = 0; i < 3; i++) {
-            printf("%s ", (char *) Vec_get(my_vec, i));
+        for(int i = 0; i < Vec_len(my_vec); i++) {
+            printf("%s ", Vec_get(my_vec, i));
         }
 
         Vec_destroy(my_vec);

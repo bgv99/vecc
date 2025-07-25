@@ -16,10 +16,11 @@ Vec *Vec_init(unsigned int size) {
         exit(1);
     }
 
-    vec_alloc->elements = malloc(size);
+    vec_alloc->elements = malloc(sizeof(void *) * size);
 
     if(vec_alloc->elements == NULL) {
         printf("null pointer - initialisation failed\n");
+        Vec_destroy(vec_alloc);
         exit(1);
     }
 
@@ -32,16 +33,25 @@ Vec *Vec_init(unsigned int size) {
 void Vec_put(Vec *vec, unsigned int index, void *value) {
     if(vec->elements == NULL) {
         printf("null pointer - can not put value\n");
+        Vec_destroy(vec);
         exit(1);
     }
 
-    if(vec->capacity < index) {
-        vec->elements = realloc(vec->elements, vec->capacity + index);
-        vec->capacity += index;
+    if(vec->capacity <= index) {
+        int increment = (index - vec->capacity) * sizeof(void *);
+        int current = vec->capacity * sizeof(void *);
+
+        if((vec->elements = realloc(vec->elements, current + increment)) != NULL) {
+            vec->capacity = vec->capacity + (index - vec->capacity);
+        } else {
+            printf("null pointer - reallocation failed\n");
+            Vec_destroy(vec);
+            exit(1);
+        }
     }
 
     vec->elements[index] = value;
-    vec->length += 1;
+    vec->length++;
 }
 
 void Vec_destroy(Vec *vec) {
@@ -52,11 +62,27 @@ void Vec_destroy(Vec *vec) {
 void Vec_remove(Vec *vec, unsigned int index) {
     if(vec->elements == NULL) {
         printf("null pointer - can not remove the value\n");
+        Vec_destroy(vec);
         exit(1);
     }
 
-    vec->elements[index] = 0;
-    vec->length -= 1;
+    for(int i = index; i < (Vec_capacity(vec) - 1); i++) {
+        void *backup = vec->elements[i];
+
+        vec->elements[i] = vec->elements[i + 1];
+        vec->elements[i + 1] = backup;
+    }
+
+    int current = vec->capacity * sizeof(void *);
+
+    if((vec->elements = realloc(vec->elements, current - sizeof(void *))) != NULL) {
+        vec->capacity--;
+        vec->length--;
+    } else {
+        printf("null pointer - reallocation failed\n");
+        Vec_destroy(vec);
+        exit(1);
+    }
 }
 
 void *Vec_get(Vec *vec, unsigned int index) {
@@ -69,9 +95,4 @@ unsigned int Vec_len(Vec *vec) {
 
 unsigned int Vec_capacity(Vec *vec) {
     return vec->capacity;
-}
-
-void Vec_popBack(Vec *vec) {
-    vec->elements[vec->length - 1] = 0;
-    vec->length -= 1;
 }
