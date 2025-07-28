@@ -3,17 +3,20 @@
     #include <stdio.h>
 
     int main() {
-        Vec *my_vec = Vec_init(3);
+        Vec *vec = Vec_init(sizeof(int), 3);
+        int a = 10, b = 20, c = 30;
 
-        Vec_put(my_vec, 0, "Rust");
-        Vec_put(my_vec, 1, "Java");
-        Vec_put(my_vec, 2, "Python");
+        Vec_push(vec, &a);
+        Vec_push(vec, &b);
+        Vec_push(vec, &c);
 
-        for(int i = 0; i < Vec_len(my_vec); i++) {
-            printf("%s ", Vec_get(my_vec, i));
+        for(int i = 0; i < Vec_length(vec); i++) {
+            printf("%d ", *(int *) Vec_get(vec, i));
         }
 
-        Vec_destroy(my_vec);
+        putchar('\n');
+
+        Vec_destroy(vec);
 
         return 0;
     }

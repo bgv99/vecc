@@ -1,57 +1,65 @@
 #include "include/vec.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <memory.h>
 
 typedef struct Vec {
     unsigned int length;
     unsigned int capacity;
-    void **elements;
+    void *elements;
+    size_t element_size;
 } Vec;
 
-Vec *Vec_init(unsigned int size) {
-    Vec *vec_alloc = malloc(sizeof(Vec));
+Vec *Vec_init(size_t byte_size, unsigned int element_count) {
+    Vec *initial_alloc = malloc(sizeof(Vec));
 
-    if(vec_alloc == NULL) {
-        printf("null pointer - initialisation failed\n");
-        exit(1);
+    initial_alloc->elements = malloc(byte_size * element_count);
+
+    if(initial_alloc == NULL || initial_alloc->elements == NULL) {
+        printf("vecc: allocation failed during initialisation (null)\n");
+        Vec_destroy(initial_alloc);
+        exit(EXIT_FAILURE);
     }
 
-    vec_alloc->elements = malloc(sizeof(void *) * size);
+    initial_alloc->length = 0;
+    initial_alloc->capacity = element_count;
+    initial_alloc->element_size = byte_size;
 
-    if(vec_alloc->elements == NULL) {
-        printf("null pointer - initialisation failed\n");
-        Vec_destroy(vec_alloc);
-        exit(1);
-    }
-
-    vec_alloc->capacity = size;
-    vec_alloc->length = 0;
-
-    return vec_alloc;
+    return initial_alloc;
 }
 
-void Vec_put(Vec *vec, unsigned int index, void *value) {
-    if(vec->elements == NULL) {
-        printf("null pointer - can not put value\n");
-        Vec_destroy(vec);
-        exit(1);
-    }
+void Vec_push(Vec *vec, void *value) {
+    if(vec->length == vec->capacity) {
+        vec->elements = realloc(vec->elements, (vec->capacity + 1) * vec->element_size);
 
-    if(vec->capacity <= index) {
-        int increment = (index - vec->capacity) * sizeof(void *);
-        int current = vec->capacity * sizeof(void *);
-
-        if((vec->elements = realloc(vec->elements, current + increment)) != NULL) {
-            vec->capacity += index - vec->capacity;
-        } else {
-            printf("null pointer - reallocation failed\n");
+        if(vec->elements == NULL) {
+            printf("vecc: reallocation failed while pushing an element\n");
             Vec_destroy(vec);
-            exit(1);
+            exit(EXIT_FAILURE);
         }
+
+        vec->capacity++;
     }
 
-    vec->elements[index] = value;
+    memcpy(((char *) vec->elements + (vec->length * vec->element_size)), value, vec->element_size);
+
     vec->length++;
+}
+
+void Vec_pop(Vec *vec) {
+    if(vec->length == 0) {
+        return;
+    }
+    
+    vec->length--;
+}
+
+void *Vec_get(Vec *vec, unsigned int index) {
+    if(index >= vec->length) {
+        return NULL;
+    }
+
+    return (void *) ((char *) vec->elements + (index * vec->element_size));
 }
 
 void Vec_destroy(Vec *vec) {
@@ -59,41 +67,7 @@ void Vec_destroy(Vec *vec) {
     free(vec);
 }
 
-void Vec_remove(Vec *vec, unsigned int index) {
-    if(vec->elements == NULL) {
-        printf("null pointer - can not remove the value\n");
-        Vec_destroy(vec);
-        exit(1);
-    }
-
-    for(int i = index; i < (Vec_capacity(vec) - 1); i++) {
-        if(vec->elements[i + 1] != NULL) {
-            void *backup = vec->elements[i];
-
-            vec->elements[i] = vec->elements[i + 1];
-            vec->elements[i + 1] = backup;
-        } else {
-            break;
-        }
-    }
-
-    int current = vec->capacity * sizeof(void *);
-
-    if((vec->elements = realloc(vec->elements, current - sizeof(void *))) != NULL) {
-        vec->capacity--;
-        vec->length--;
-    } else {
-        printf("null pointer - reallocation failed\n");
-        Vec_destroy(vec);
-        exit(1);
-    }
-}
-
-void *Vec_get(Vec *vec, unsigned int index) {
-    return vec->elements[index];
-}
-
-unsigned int Vec_len(Vec *vec) {
+unsigned int Vec_length(Vec *vec) {
     return vec->length;
 }
 
