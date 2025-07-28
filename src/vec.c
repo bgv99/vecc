@@ -1,5 +1,4 @@
 #include "include/vec.h"
-#include <stdlib.h>
 #include <stdio.h>
 #include <memory.h>
 
@@ -17,7 +16,6 @@ Vec *Vec_init(size_t byte_size, unsigned int element_count) {
 
     if(initial_alloc == NULL || initial_alloc->elements == NULL) {
         printf("vecc: allocation failed during initialisation (null)\n");
-        Vec_destroy(initial_alloc);
         exit(EXIT_FAILURE);
     }
 
